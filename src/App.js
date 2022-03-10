@@ -6,33 +6,50 @@ import "./App.css";
 function App() {
   const [movies, setMovie] = useState([]);
   const [isloading, setIsloading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchMovie = async () => {
     setIsloading(true);
-    const response = await fetch("https://swapi.py4e.com/api/films/");
-    const data = await response.json();
-    const transformedMovie = data.results.map((movieData) => {
-      return {
-        id: movieData.episode_id,
-        title: movieData.title,
-        openingText: movieData.opening_crawl,
-        releaseDate: movieData.release_date,
-      };
-    });
-    setMovie(transformedMovie);
+    setError(null);
+    try {
+      const response = await fetch("https://swapi.py4e.com/api/films/");
+
+      if (!response.ok) {
+        throw new Error("Error : Something went wrong!!", );
+      }
+      const data = await response.json();
+      const transformedMovie = data.results.map((movieData) => {
+        return {
+          id: movieData.episode_id,
+          title: movieData.title,
+          openingText: movieData.opening_crawl,
+          releaseDate: movieData.release_date,
+        };
+      });
+      setMovie(transformedMovie);
+    } catch (error) {
+      setError(error.message);
+    }
     setIsloading(false);
   };
 
+  let content = <p>Found no movie</p>;
+
+  if (movies.length > 0) {
+    content = <MoviesList movies={movies} />;
+  }
+  if (error) {
+    content = <h3>{error}</h3>;
+  }
+  if (isloading) {
+    content = <h3>Loading...</h3>;
+  }
   return (
     <React.Fragment>
       <section>
         <button onClick={fetchMovie}>Fetch Movies</button>
       </section>
-      <section>
-        {!isloading && movies.length > 0 && <MoviesList movies={movies} />}
-        {!isloading && movies.length == 0 && <h3>No movie found</h3>}
-        {isloading && <h3>Loading...</h3>}
-      </section>
+      <section>{content}</section>
     </React.Fragment>
   );
 }
